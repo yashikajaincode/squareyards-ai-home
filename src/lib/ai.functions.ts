@@ -83,13 +83,29 @@ export const generateOptions = createServerFn({ method: "POST" })
     if (proj.error) throw new Error(proj.error.message);
     const p = proj.data;
 
-    const catalog = await context.supabase
-      .from("catalog")
-      .select("item_id,category,name,style_tags,price_inr,color_finish,room_types")
-      .ilike("room_types", `%${p.room_type ?? ""}%`);
-    const items: CatalogRow[] = (catalog.data ?? []) as CatalogRow[];
+    // Multi-room: iterate `rooms` JSONB; fall back to single-room legacy fields
+    const projectRooms: Array<any> = Array.isArray(p.rooms) && p.rooms.length > 0
+      ? p.rooms
+      : [{
+          room_type: p.room_type,
+          length_cm: p.length_cm,
+          width_cm: p.width_cm,
+          budget_inr: p.budget_inr,
+          style_preference: p.style_preference,
+          must_haves: p.must_haves,
+        }];
 
-    const sys = `You are a senior interior designer. Produce three distinct design options for the brief. Return STRICT JSON only:
+    const insertedIds: string[] = [];
+
+    for (let roomIdx = 0; roomIdx < projectRooms.length; roomIdx++) {
+      const r = projectRooms[roomIdx];
+      const catalog = await context.supabase
+        .from("catalog")
+        .select("item_id,category,name,style_tags,price_inr,color_finish,room_types")
+        .ilike("room_types", `%${r.room_type ?? ""}%`);
+      const items: CatalogRow[] = (catalog.data ?? []) as CatalogRow[];
+
+      const sys = `You are a senior interior designer. Produce three distinct design options for ONE room in the brief. Return STRICT JSON only:
 {
  "options": [
   {
@@ -110,74 +126,69 @@ Rules:
 - Use ONLY item_ids from the provided catalog for boq_item_ids.
 - Balanced: ~budget. Budget Optimized: 0.6–0.75x budget. Premium: 1.1–1.5x budget.
 - Each option boq must include core categories for the room.
-- render_prompt: a vivid photo-real prompt of the redesigned room, warm neutral premium aesthetic, descriptive of furniture, color, light.
+- render_prompt MUST be a vivid, photo-real interior photograph prompt: explicitly name the room type, the chosen style, dominant wall/floor materials, 3-5 specific furniture pieces with materials and colors (drawn from the palette), lighting quality, time of day, and camera angle (wide angle, eye level). 50-90 words. No people. Magazine editorial quality.
 - style_dna percentages sum to 100.`;
 
-    const user = `Brief:
+      const user = `Brief:
 intent: ${p.intent}
-room: ${p.room_type ?? "n/a"}  size: ${p.length_cm ?? "?"}×${p.width_cm ?? "?"}cm
-budget: ₹${p.budget_inr ?? "flexible"}
-style: ${p.style_preference ?? "open"}
+room: ${r.room_type ?? "n/a"}  size: ${r.length_cm ?? "?"}×${r.width_cm ?? "?"}cm
+budget for THIS room: ₹${r.budget_inr ?? "flexible"}  (project total: ₹${p.budget_inr ?? "flexible"})
+style preference for THIS room: ${r.style_preference ?? "open"}
 lifestyle: ${p.lifestyle ?? ""}
-must_haves: ${p.must_haves ?? ""}
+must_haves for this room: ${r.must_haves ?? ""}
 notes: ${p.notes ?? ""}
 analysis: ${JSON.stringify(p.ai_analysis ?? {})}
 
 Catalog (use item_id verbatim):
 ${items.map(i => `${i.item_id} | ${i.category} | ${i.name} | ₹${i.price_inr ?? "?"} | ${i.style_tags ?? ""} | ${i.color_finish ?? ""}`).join("\n")}`;
 
-    const res = await gatewayJSON({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-    });
-    const content = res.choices?.[0]?.message?.content ?? "";
-    const parsed = extractJSON(typeof content === "string" ? content : JSON.stringify(content));
-
-    const itemsById = new Map(items.map(i => [i.item_id, i]));
-    const insertedIds: string[] = [];
-
-    for (const opt of parsed.options ?? []) {
-      const boqIds: string[] = Array.isArray(opt.boq_item_ids) ? opt.boq_item_ids.filter((id: any) => itemsById.has(id)) : [];
-      const budgetUsed = boqIds.reduce((s, id) => s + (itemsById.get(id)?.price_inr ?? 0), 0);
-      const { data: inserted, error } = await context.supabase.from("design_options").insert({
-        project_id: data.project_id,
-        user_id: context.userId,
-        label: opt.label ?? "Balanced",
-        concept_name: opt.concept_name ?? "Concept",
-        rationale: opt.rationale ?? "",
-        tradeoffs: opt.tradeoffs ?? "",
-        confidence: Math.round(opt.confidence ?? 85),
-        style_dna: opt.style_dna ?? [],
-        color_palette: opt.color_palette ?? [],
-        materials: opt.materials ?? [],
-        budget_used: budgetUsed,
-        moodboard_urls: [],
-      }).select("id").single();
-      if (error) throw new Error(error.message);
-      insertedIds.push(inserted.id);
-
-      // BOQ inserts
-      const boqRows = boqIds.map(id => {
-        const it = itemsById.get(id)!;
-        return {
-          option_id: inserted.id,
-          user_id: context.userId,
-          catalog_item_id: id,
-          category: it.category,
-          name: it.name,
-          qty: 1,
-          unit_price_inr: it.price_inr,
-        };
+      const res = await gatewayJSON({
+        model: "google/gemini-3-flash-preview",
+        messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       });
-      if (boqRows.length) {
-        await context.supabase.from("boq_items").insert(boqRows);
-      }
+      const content = res.choices?.[0]?.message?.content ?? "";
+      const parsed = extractJSON(typeof content === "string" ? content : JSON.stringify(content));
 
-      // Stash render prompt in ai_analysis-style field via materials append (hacky) - actually use rationale or store separately.
-      // Use the moodboard_urls jsonb as ephemeral store.
-      await context.supabase.from("design_options")
-        .update({ moodboard_urls: { render_prompt: opt.render_prompt ?? "" } })
-        .eq("id", inserted.id);
+      const itemsById = new Map(items.map(i => [i.item_id, i]));
+
+      for (const opt of parsed.options ?? []) {
+        const boqIds: string[] = Array.isArray(opt.boq_item_ids) ? opt.boq_item_ids.filter((id: any) => itemsById.has(id)) : [];
+        const budgetUsed = boqIds.reduce((s, id) => s + (itemsById.get(id)?.price_inr ?? 0), 0);
+        const { data: inserted, error } = await context.supabase.from("design_options").insert({
+          project_id: data.project_id,
+          user_id: context.userId,
+          room_label: r.room_type ?? null,
+          room_index: roomIdx,
+          label: opt.label ?? "Balanced",
+          concept_name: opt.concept_name ?? "Concept",
+          rationale: opt.rationale ?? "",
+          tradeoffs: opt.tradeoffs ?? "",
+          confidence: Math.round(opt.confidence ?? 85),
+          style_dna: opt.style_dna ?? [],
+          color_palette: opt.color_palette ?? [],
+          materials: opt.materials ?? [],
+          budget_used: budgetUsed,
+          moodboard_urls: { render_prompt: opt.render_prompt ?? "" },
+        }).select("id").single();
+        if (error) throw new Error(error.message);
+        insertedIds.push(inserted.id);
+
+        const boqRows = boqIds.map(id => {
+          const it = itemsById.get(id)!;
+          return {
+            option_id: inserted.id,
+            user_id: context.userId,
+            catalog_item_id: id,
+            category: it.category,
+            name: it.name,
+            qty: 1,
+            unit_price_inr: it.price_inr,
+          };
+        });
+        if (boqRows.length) {
+          await context.supabase.from("boq_items").insert(boqRows);
+        }
+      }
     }
 
     await context.supabase.from("projects")
