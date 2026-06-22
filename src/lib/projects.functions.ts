@@ -2,6 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const RoomSchema = z.object({
+  room_type: z.string(),
+  length_cm: z.number().int().nullable(),
+  width_cm: z.number().int().nullable(),
+  budget_inr: z.number().int(),
+  style_preference: z.string(),
+  must_haves: z.string().optional().default(""),
+});
+
 const CreateInput = z.object({
   title: z.string().min(1).max(120),
   intent: z.string().min(1),
@@ -13,6 +22,7 @@ const CreateInput = z.object({
   lifestyle: z.string().optional().nullable(),
   must_haves: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  rooms: z.array(RoomSchema).optional().default([]),
 });
 
 export const createProject = createServerFn({ method: "POST" })
