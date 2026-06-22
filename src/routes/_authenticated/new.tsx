@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { INTENTS, ROOM_TYPES, STYLES, formatINR } from "@/lib/intents";
-import { ArrowRight, Check, Plus, X } from "lucide-react";
+import { ArrowRight, Check, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
