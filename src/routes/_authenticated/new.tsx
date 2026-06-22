@@ -34,7 +34,7 @@ function NewProject() {
   const router = useRouter();
   const create = useServerFn(createProject);
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [intent, setIntent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [totalBudget, setTotalBudget] = useState<number>(1000000);
