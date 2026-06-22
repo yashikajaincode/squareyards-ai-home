@@ -120,12 +120,11 @@ function NewProject() {
       <SiteNav />
       <div className="px-6 md:px-10 pb-24">
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Step {step} of 3 · Start your project
+          Step {step} of 2 · Start your project
         </p>
         <h1 className="font-display text-4xl md:text-5xl mt-2 max-w-3xl">
           {step === 1 && "What are you designing?"}
-          {step === 2 && "Which rooms, and what's your total budget?"}
-          {step === 3 && "Tell us about each room."}
+          {step === 2 && "Tell us about each room."}
         </h1>
 
         {step === 1 && (
