@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /spaces
+Disallow: /new
+Disallow: /projects
+Sitemap: /sitemap.xml

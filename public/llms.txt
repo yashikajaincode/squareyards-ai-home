@@ -1,0 +1,10 @@
+# SquareYards AI
+
+> Your AI Interior Designer that understands your vibe, your space, and you.
+> Personalized interior design plans, photoreal renders, moodboards, and a real product BOQ — in minutes.
+
+SquareYards AI helps users transform vague ideas, room photos, inspiration images, budgets, and lifestyle preferences into personalized interior design plans with real products, visual previews, and actionable recommendations.
+
+## Pages
+
+- [Home](/): Hero, intent picker, before/after preview, and product story.
