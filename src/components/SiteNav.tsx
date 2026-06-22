@@ -27,7 +27,8 @@ export function SiteNav({ inverted = false }: { inverted?: boolean }) {
         </span>
         SquareYards <span className="opacity-60">AI</span>
       </Link>
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-4 text-sm">
+        <Link to="/" className="hover:opacity-70" activeOptions={{ exact: true }}>Home</Link>
         {email ? (
           <>
             <Link to="/spaces" className="hidden sm:inline hover:opacity-70">My Spaces</Link>
