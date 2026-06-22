@@ -193,22 +193,41 @@ function ProjectDetail() {
                 </Button>
               </div>
 
-              {options.length > 0 && (
-                <Tabs defaultValue={options[0].id} className="mt-6">
-                  <TabsList className="bg-secondary/50 rounded-full p-1">
-                    {options.map((o: any) => (
-                      <TabsTrigger key={o.id} value={o.id} className="rounded-full data-[state=active]:bg-walnut data-[state=active]:text-background">
-                        {o.label}
-                      </TabsTrigger>
+              {options.length > 0 && (() => {
+                // Group options by room_label (preserving order)
+                const groups = new Map<string, any[]>();
+                for (const o of options) {
+                  const k = o.room_label ?? project.room_type ?? "Room";
+                  if (!groups.has(k)) groups.set(k, []);
+                  groups.get(k)!.push(o);
+                }
+                return (
+                  <div className="mt-6 space-y-10">
+                    {Array.from(groups.entries()).map(([roomLabel, opts]) => (
+                      <div key={roomLabel}>
+                        <div className="flex items-baseline justify-between mb-3">
+                          <h3 className="font-display text-xl">{roomLabel}</h3>
+                          <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{opts.length} concepts</span>
+                        </div>
+                        <Tabs defaultValue={opts[0].id}>
+                          <TabsList className="bg-secondary/50 rounded-full p-1">
+                            {opts.map((o: any) => (
+                              <TabsTrigger key={o.id} value={o.id} className="rounded-full data-[state=active]:bg-walnut data-[state=active]:text-background">
+                                {o.label}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                          {opts.map((o: any) => (
+                            <TabsContent key={o.id} value={o.id} className="mt-6 space-y-6">
+                              <OptionView option={o} boq={(data?.boq ?? []).filter((b: any) => b.option_id === o.id)} fallbackBefore={images[0]?.public_url ?? sampleBefore} sampleAfter={sampleAfter} />
+                            </TabsContent>
+                          ))}
+                        </Tabs>
+                      </div>
                     ))}
-                  </TabsList>
-                  {options.map((o: any) => (
-                    <TabsContent key={o.id} value={o.id} className="mt-6 space-y-6">
-                      <OptionView option={o} boq={(data?.boq ?? []).filter((b: any) => b.option_id === o.id)} fallbackBefore={images[0]?.public_url ?? sampleBefore} sampleAfter={sampleAfter} />
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              )}
+                  </div>
+                );
+              })()}
             </section>
           </main>
         </div>
