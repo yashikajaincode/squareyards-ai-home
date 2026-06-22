@@ -1,0 +1,3 @@
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS rooms JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.design_options ADD COLUMN IF NOT EXISTS room_label TEXT;
+ALTER TABLE public.design_options ADD COLUMN IF NOT EXISTS room_index INTEGER NOT NULL DEFAULT 0;

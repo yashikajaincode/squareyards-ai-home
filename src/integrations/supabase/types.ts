@@ -125,6 +125,8 @@ export type Database = {
           moodboard_urls: Json | null
           project_id: string
           rationale: string | null
+          room_index: number
+          room_label: string | null
           style_dna: Json | null
           tradeoffs: string | null
           user_id: string
@@ -143,6 +145,8 @@ export type Database = {
           moodboard_urls?: Json | null
           project_id: string
           rationale?: string | null
+          room_index?: number
+          room_label?: string | null
           style_dna?: Json | null
           tradeoffs?: string | null
           user_id: string
@@ -161,6 +165,8 @@ export type Database = {
           moodboard_urls?: Json | null
           project_id?: string
           rationale?: string | null
+          room_index?: number
+          room_label?: string | null
           style_dna?: Json | null
           tradeoffs?: string | null
           user_id?: string
@@ -247,6 +253,7 @@ export type Database = {
           must_haves: string | null
           notes: string | null
           room_type: string | null
+          rooms: Json
           status: string
           style_preference: string | null
           title: string
@@ -267,6 +274,7 @@ export type Database = {
           must_haves?: string | null
           notes?: string | null
           room_type?: string | null
+          rooms?: Json
           status?: string
           style_preference?: string | null
           title: string
@@ -287,6 +295,7 @@ export type Database = {
           must_haves?: string | null
           notes?: string | null
           room_type?: string | null
+          rooms?: Json
           status?: string
           style_preference?: string | null
           title?: string
