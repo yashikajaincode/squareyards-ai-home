@@ -45,7 +45,7 @@ export const analyzeRoom = createServerFn({ method: "POST" })
  "natural_light": "Low|Medium|High",
  "existing_furniture": [{"item": string, "reusable": boolean}],
  "dominant_colors": [string],
- "style_detected": string,
+ "style_detected": string,   // 1-3 WORDS MAX, e.g. "Contemporary" or "Mid-Century Modern"
  "space_efficiency_pct": number,
  "opportunities": [string],
  "constraints": [string]
