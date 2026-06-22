@@ -219,9 +219,11 @@ function ProjectDetail() {
 
 function Stat({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+    <div className="rounded-xl border border-border/60 bg-background/60 p-4 min-w-0">
       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-xl">{value ?? "—"}</p>
+      <p className="mt-1 font-display text-lg leading-tight break-words" title={value ?? ""}>
+        {value ?? "—"}
+      </p>
     </div>
   );
 }
