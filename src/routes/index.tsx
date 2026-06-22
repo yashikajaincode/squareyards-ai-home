@@ -60,7 +60,7 @@ function Landing() {
                 Start your project
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link to="/auth" className="rounded-full border border-border bg-card/60 px-5 py-3 text-sm text-foreground hover:bg-card">
+              <Link to="/inspiration" className="rounded-full border border-border bg-card/60 px-5 py-3 text-sm text-foreground hover:bg-card">
                 Browse inspiration
               </Link>
             </motion.div>

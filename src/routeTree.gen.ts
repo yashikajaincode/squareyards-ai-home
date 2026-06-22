@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as InspirationRouteImport } from './routes/inspiration'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,6 +21,11 @@ import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authentic
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InspirationRoute = InspirationRouteImport.update({
+  id: '/inspiration',
+  path: '/inspiration',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -55,6 +61,7 @@ const AuthenticatedProjectsIdRoute = AuthenticatedProjectsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/inspiration': typeof InspirationRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/new': typeof AuthenticatedNewRoute
   '/spaces': typeof AuthenticatedSpacesRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/inspiration': typeof InspirationRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/new': typeof AuthenticatedNewRoute
   '/spaces': typeof AuthenticatedSpacesRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/inspiration': typeof InspirationRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/new': typeof AuthenticatedNewRoute
   '/_authenticated/spaces': typeof AuthenticatedSpacesRoute
@@ -83,17 +92,26 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/inspiration'
     | '/sitemap.xml'
     | '/new'
     | '/spaces'
     | '/projects/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/sitemap.xml' | '/new' | '/spaces' | '/projects/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/inspiration'
+    | '/sitemap.xml'
+    | '/new'
+    | '/spaces'
+    | '/projects/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/inspiration'
     | '/sitemap.xml'
     | '/_authenticated/new'
     | '/_authenticated/spaces'
@@ -104,6 +122,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InspirationRoute: typeof InspirationRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -114,6 +133,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inspiration': {
+      id: '/inspiration'
+      path: '/inspiration'
+      fullPath: '/inspiration'
+      preLoaderRoute: typeof InspirationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -180,6 +206,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InspirationRoute: InspirationRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
