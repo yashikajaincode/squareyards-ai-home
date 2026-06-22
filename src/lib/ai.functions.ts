@@ -210,7 +210,18 @@ export const generateRender = createServerFn({ method: "POST" })
     const opt = await context.supabase.from("design_options").select("*").eq("id", data.option_id).single();
     if (opt.error) throw new Error(opt.error.message);
     const stashed: any = opt.data.moodboard_urls ?? {};
-    const prompt = stashed.render_prompt ?? `Photoreal warm-neutral interior, premium ${opt.data.concept_name}, soft natural light, editorial photography.`;
+    const palette = (opt.data.color_palette ?? []) as Array<{ name: string; hex: string }>;
+    const styleDna = (opt.data.style_dna ?? []) as Array<{ style: string; pct: number }>;
+    const materials = (opt.data.materials ?? []) as string[];
+    const room = opt.data.room_label ?? "room";
+    const dominantStyle = styleDna.sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0))[0]?.style ?? "contemporary";
+    const paletteStr = palette.map((c) => `${c.name} ${c.hex}`).join(", ");
+    const materialsStr = materials.join(", ");
+
+    const basePrompt = stashed.render_prompt && stashed.render_prompt.length > 40
+      ? stashed.render_prompt
+      : `A ${dominantStyle} ${room} interior. Materials: ${materialsStr}. Color palette: ${paletteStr}.`;
+    const prompt = `${basePrompt} Style: ${dominantStyle}. Palette: ${paletteStr}. Materials: ${materialsStr}. Wide-angle architectural interior photograph, eye-level, soft natural daylight from large windows, photorealistic, sharp focus, magazine editorial, no people, no text.`;
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -223,7 +234,7 @@ export const generateRender = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({
         model: "google/gemini-3.1-flash-image",
-        prompt: prompt + " Wide angle, photorealistic, magazine quality.",
+        prompt,
       }),
     });
     const text = await r.text();
