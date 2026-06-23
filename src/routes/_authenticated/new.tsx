@@ -27,6 +27,7 @@ type RoomBrief = {
   budget_inr: number;
   style_preference: string;
   must_haves: string;
+  photos: File[];
 };
 
 function newId() {
@@ -34,7 +35,7 @@ function newId() {
 }
 
 function makeRoom(room_type: string, label: string, budget = 300000): RoomBrief {
-  return { id: newId(), label, room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "" };
+  return { id: newId(), label, room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "", photos: [] };
 }
 
 function NewProject() {
