@@ -312,6 +312,47 @@ function NewProject() {
                         <Label>Must-have furniture</Label>
                         <Input value={r.must_haves} onChange={(e) => updateRoom(r.id, { must_haves: e.target.value })} className="mt-1" placeholder="3-seater sofa, reading chair, TV unit" />
                       </div>
+
+                      <div>
+                        <Label>Photos of {r.label} <span className="text-muted-foreground">helps AI understand your space</span></Label>
+                        <div className="mt-2 flex items-center gap-3 flex-wrap">
+                          <label className="cursor-pointer inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-walnut/40">
+                            <Upload className="h-4 w-4" />
+                            <span>{r.photos.length ? "Add more" : "Upload photos"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              hidden
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files ?? []);
+                                if (files.length) updateRoom(r.id, { photos: [...r.photos, ...files] });
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                          {r.photos.length > 0 && (
+                            <span className="text-xs text-muted-foreground">{r.photos.length} photo{r.photos.length > 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                        {r.photos.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {r.photos.map((f, idx) => (
+                              <div key={idx} className="relative h-20 w-20 overflow-hidden rounded-lg border border-border/60">
+                                <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => updateRoom(r.id, { photos: r.photos.filter((_, i) => i !== idx) })}
+                                  className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5 hover:bg-background"
+                                  aria-label="Remove photo"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
