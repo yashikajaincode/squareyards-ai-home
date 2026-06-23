@@ -249,9 +249,9 @@ function OptionView({ option, boq, fallbackBefore, sampleAfter }: { option: any;
         {(option.color_palette ?? []).length > 0 && (
           <Card title="Palette">
             <div className="flex flex-wrap gap-3">
-              {option.color_palette.map((c: any) => (
-                <div key={c.hex} className="text-center">
-                  <div className="h-12 w-12 rounded-full border border-border" style={{ background: c.hex }} />
+              {option.color_palette.map((c: any, i: number) => (
+                <div key={`${c.hex ?? "c"}-${i}`} className="text-center">
+                  <div className="h-12 w-12 rounded-full border border-border" style={{ background: c.hex ?? "#ccc" }} />
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">{c.name}</div>
                 </div>
               ))}
