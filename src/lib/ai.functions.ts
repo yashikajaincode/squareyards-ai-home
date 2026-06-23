@@ -233,8 +233,11 @@ export const generateRender = createServerFn({ method: "POST" })
         "X-Lovable-AIG-SDK": "raw-fetch",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image",
+        model: "openai/gpt-image-2",
         prompt,
+        size: "1024x1024",
+        quality: "low",
+        n: 1,
       }),
     });
     const text = await r.text();

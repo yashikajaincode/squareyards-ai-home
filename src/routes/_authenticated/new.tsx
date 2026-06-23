@@ -1,16 +1,17 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { createProject } from "@/lib/projects.functions";
+import { createProject, recordImage } from "@/lib/projects.functions";
 import { SiteNav } from "@/components/SiteNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { INTENTS, ROOM_TYPES, STYLES, formatINR } from "@/lib/intents";
-import { ArrowRight, Check, Copy, Plus, X } from "lucide-react";
+import { ArrowRight, Check, Copy, Plus, Upload, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/new")({
   head: () => ({ meta: [{ title: "Start a project — SquareYards AI" }] }),
@@ -26,6 +27,7 @@ type RoomBrief = {
   budget_inr: number;
   style_preference: string;
   must_haves: string;
+  photos: File[];
 };
 
 function newId() {
@@ -33,12 +35,13 @@ function newId() {
 }
 
 function makeRoom(room_type: string, label: string, budget = 300000): RoomBrief {
-  return { id: newId(), label, room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "" };
+  return { id: newId(), label, room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "", photos: [] };
 }
 
 function NewProject() {
   const router = useRouter();
   const create = useServerFn(createProject);
+  const recordImg = useServerFn(recordImage);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [intent, setIntent] = useState<string>("");
@@ -124,6 +127,25 @@ function NewProject() {
           })),
         },
       });
+
+      // Upload room photos (if any) and record them
+      const allPhotos = rooms.flatMap((r) => r.photos.map((f) => ({ room: r.label, file: f })));
+      if (allPhotos.length) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (const { file } of allPhotos) {
+            const path = `${user.id}/${id}/${Date.now()}-${file.name}`;
+            const up = await supabase.storage.from("project-images").upload(path, file, { upsert: true });
+            if (up.error) continue;
+            const signed = await supabase.storage.from("project-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+            await recordImg({ data: {
+              project_id: id, kind: "room",
+              storage_path: path, public_url: signed.data?.signedUrl ?? "",
+            }}).catch(() => {});
+          }
+        }
+      }
+
       router.navigate({ to: "/projects/$id", params: { id } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create project");
@@ -289,6 +311,47 @@ function NewProject() {
                       <div>
                         <Label>Must-have furniture</Label>
                         <Input value={r.must_haves} onChange={(e) => updateRoom(r.id, { must_haves: e.target.value })} className="mt-1" placeholder="3-seater sofa, reading chair, TV unit" />
+                      </div>
+
+                      <div>
+                        <Label>Photos of {r.label} <span className="text-muted-foreground">helps AI understand your space</span></Label>
+                        <div className="mt-2 flex items-center gap-3 flex-wrap">
+                          <label className="cursor-pointer inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-walnut/40">
+                            <Upload className="h-4 w-4" />
+                            <span>{r.photos.length ? "Add more" : "Upload photos"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              hidden
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files ?? []);
+                                if (files.length) updateRoom(r.id, { photos: [...r.photos, ...files] });
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                          {r.photos.length > 0 && (
+                            <span className="text-xs text-muted-foreground">{r.photos.length} photo{r.photos.length > 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                        {r.photos.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {r.photos.map((f, idx) => (
+                              <div key={idx} className="relative h-20 w-20 overflow-hidden rounded-lg border border-border/60">
+                                <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => updateRoom(r.id, { photos: r.photos.filter((_, i) => i !== idx) })}
+                                  className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5 hover:bg-background"
+                                  aria-label="Remove photo"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

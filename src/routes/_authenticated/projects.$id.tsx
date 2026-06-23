@@ -145,21 +145,25 @@ function ProjectDetail() {
 
           {/* MAIN */}
           <main className="space-y-8">
-            {/* Upload + analyze */}
+            {/* Your space */}
             <section className="rounded-2xl border border-border/70 bg-card p-6">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="font-display text-2xl">Upload your space</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Room photos, floor plans, or Pinterest screenshots.</p>
+                  <h2 className="font-display text-2xl">Your space</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {images.length
+                      ? `${images.length} photo${images.length > 1 ? "s" : ""} uploaded. Analyze to read the room.`
+                      : "Add a few photos of the room to unlock smarter designs."}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => onUpload(e.target.files)} />
                   <Button variant="outline" onClick={() => fileRef.current?.click()} className="rounded-full">
-                    <Upload className="h-4 w-4 mr-1" /> Upload
+                    <Upload className="h-4 w-4 mr-1" /> Add photos
                   </Button>
-                  <Button onClick={runAnalyze} disabled={busy !== null} className="rounded-full">
+                  <Button onClick={runAnalyze} disabled={busy !== null || !images.length} className="rounded-full">
                     <Sparkles className="h-4 w-4 mr-1" />
-                    {busy === "analyzing" ? "Analyzing…" : "Analyze space"}
+                    {busy === "analyzing" ? "Analyzing…" : a ? "Re-analyze" : "Analyze space"}
                   </Button>
                 </div>
               </div>
