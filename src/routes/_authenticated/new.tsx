@@ -41,6 +41,7 @@ function makeRoom(room_type: string, label: string, budget = 300000): RoomBrief 
 function NewProject() {
   const router = useRouter();
   const create = useServerFn(createProject);
+  const recordImg = useServerFn(recordImage);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [intent, setIntent] = useState<string>("");
