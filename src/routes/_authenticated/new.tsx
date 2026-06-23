@@ -193,12 +193,19 @@ function NewProject() {
             </div>
 
             <div>
-              <Label>Rooms to design <span className="text-muted-foreground">pick one or more</span></Label>
+              <Label>Rooms to design <span className="text-muted-foreground">tap to add — repeat for multiples</span></Label>
               <div className="mt-2 flex flex-wrap gap-2">
-                {ROOM_TYPES.map((r) => (
-                  <Chip key={r} active={selectedRoomTypes.includes(r)} onClick={() => toggleRoom(r)}>{r}</Chip>
-                ))}
+                {ROOM_TYPES.map((r) => {
+                  const count = countsByType[r] ?? 0;
+                  return (
+                    <Chip key={r} active={count > 0} onClick={() => addRoom(r)}>
+                      <Plus className="h-3.5 w-3.5" />
+                      {r}{count > 0 ? ` · ${count}` : ""}
+                    </Chip>
+                  );
+                })}
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">Got 3 bedrooms? Tap Bedroom three times — each one gets its own size, budget and style.</p>
             </div>
 
             {rooms.length > 0 && (
@@ -218,27 +225,42 @@ function NewProject() {
 
                 <div className="space-y-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Configure each room</p>
-                  {rooms.map((r, idx) => (
-                    <div key={r.room_type + idx} className="rounded-2xl border border-border/70 bg-card p-6 space-y-5">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-display text-2xl">{r.room_type}</h3>
-                        <button
-                          onClick={() => toggleRoom(r.room_type)}
-                          className="text-muted-foreground hover:text-foreground p-1"
-                          aria-label="Remove room"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                  {rooms.map((r) => (
+                    <div key={r.id} className="rounded-2xl border border-border/70 bg-card p-6 space-y-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <Input
+                          value={r.label}
+                          onChange={(e) => updateRoom(r.id, { label: e.target.value })}
+                          className="font-display text-2xl md:text-2xl border-0 px-0 h-auto py-0 shadow-none focus-visible:ring-0 bg-transparent max-w-md"
+                        />
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => duplicateRoom(r.id)}
+                            className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted"
+                            aria-label="Duplicate room"
+                            title="Duplicate"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => removeRoom(r.id)}
+                            className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted"
+                            aria-label="Remove room"
+                            title="Remove"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 max-w-md">
                         <div>
                           <Label>Length (cm) <span className="text-muted-foreground">optional</span></Label>
-                          <Input inputMode="numeric" value={r.length_cm} onChange={(e) => updateRoom(idx, { length_cm: e.target.value.replace(/\D/g, "") })} className="mt-1" placeholder="480" />
+                          <Input inputMode="numeric" value={r.length_cm} onChange={(e) => updateRoom(r.id, { length_cm: e.target.value.replace(/\D/g, "") })} className="mt-1" placeholder="480" />
                         </div>
                         <div>
                           <Label>Width (cm)</Label>
-                          <Input inputMode="numeric" value={r.width_cm} onChange={(e) => updateRoom(idx, { width_cm: e.target.value.replace(/\D/g, "") })} className="mt-1" placeholder="360" />
+                          <Input inputMode="numeric" value={r.width_cm} onChange={(e) => updateRoom(r.id, { width_cm: e.target.value.replace(/\D/g, "") })} className="mt-1" placeholder="360" />
                         </div>
                       </div>
 
@@ -247,8 +269,8 @@ function NewProject() {
                         <div className="mt-2 flex items-center gap-3">
                           <Input
                             inputMode="numeric"
-                            value={r.budget_inr}
-                            onChange={(e) => updateRoom(idx, { budget_inr: parseInt(e.target.value.replace(/\D/g, "") || "0") })}
+                            value={String(r.budget_inr)}
+                            onChange={(e) => updateRoom(r.id, { budget_inr: parseInt(e.target.value.replace(/\D/g, "") || "0") })}
                             className="max-w-[180px]"
                           />
                           <span className="text-sm text-muted-foreground">{formatINR(r.budget_inr)}</span>
@@ -256,23 +278,24 @@ function NewProject() {
                       </div>
 
                       <div>
-                        <Label>Style preference for {r.room_type}</Label>
+                        <Label>Style preference for {r.label}</Label>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {STYLES.map((s) => (
-                            <Chip key={s} active={r.style_preference === s} onClick={() => updateRoom(idx, { style_preference: s })}>{s}</Chip>
+                            <Chip key={s} active={r.style_preference === s} onClick={() => updateRoom(r.id, { style_preference: s })}>{s}</Chip>
                           ))}
                         </div>
                       </div>
 
                       <div>
                         <Label>Must-have furniture</Label>
-                        <Input value={r.must_haves} onChange={(e) => updateRoom(idx, { must_haves: e.target.value })} className="mt-1" placeholder="3-seater sofa, reading chair, TV unit" />
+                        <Input value={r.must_haves} onChange={(e) => updateRoom(r.id, { must_haves: e.target.value })} className="mt-1" placeholder="3-seater sofa, reading chair, TV unit" />
                       </div>
                     </div>
                   ))}
                 </div>
               </>
             )}
+
 
             <div>
               <Label>Lifestyle <span className="text-muted-foreground">applies across rooms</span></Label>
