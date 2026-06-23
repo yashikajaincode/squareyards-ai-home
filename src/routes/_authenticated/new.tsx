@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { INTENTS, ROOM_TYPES, STYLES, formatINR } from "@/lib/intents";
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowRight, Check, Copy, Plus, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/new")({
 });
 
 type RoomBrief = {
+  id: string;
+  label: string;
   room_type: string;
   length_cm: string;
   width_cm: string;
@@ -26,8 +28,12 @@ type RoomBrief = {
   must_haves: string;
 };
 
-function emptyRoom(room_type: string, budget = 300000): RoomBrief {
-  return { room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "" };
+function newId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function makeRoom(room_type: string, label: string, budget = 300000): RoomBrief {
+  return { id: newId(), label, room_type, length_cm: "", width_cm: "", budget_inr: budget, style_preference: "Scandinavian", must_haves: "" };
 }
 
 function NewProject() {
@@ -38,7 +44,6 @@ function NewProject() {
   const [intent, setIntent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [totalBudget, setTotalBudget] = useState<number>(1000000);
-  const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([]);
   const [rooms, setRooms] = useState<RoomBrief[]>([]);
   const [lifestyle, setLifestyle] = useState("");
   const [notes, setNotes] = useState("");
@@ -46,6 +51,11 @@ function NewProject() {
 
   const allocated = useMemo(() => rooms.reduce((s, r) => s + (r.budget_inr || 0), 0), [rooms]);
   const remaining = totalBudget - allocated;
+  const countsByType = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const r of rooms) m[r.room_type] = (m[r.room_type] ?? 0) + 1;
+    return m;
+  }, [rooms]);
 
   function pickIntent(id: string) {
     setIntent(id);
@@ -53,22 +63,30 @@ function NewProject() {
     setStep(2);
   }
 
-  function toggleRoom(rt: string) {
-    setSelectedRoomTypes((prev) => {
-      const exists = prev.includes(rt);
-      const next = exists ? prev.filter((r) => r !== rt) : [...prev, rt];
-      // sync rooms
-      setRooms((rs) => {
-        if (exists) return rs.filter((r) => r.room_type !== rt);
-        const evenSplit = next.length ? Math.floor(totalBudget / next.length) : 0;
-        return [...rs, emptyRoom(rt, evenSplit)];
-      });
-      return next;
+  function addRoom(rt: string) {
+    setRooms((rs) => {
+      const sameType = rs.filter((r) => r.room_type === rt).length;
+      const label = sameType === 0 ? rt : `${rt} ${sameType + 1}`;
+      const evenSplit = Math.floor(totalBudget / (rs.length + 1));
+      return [...rs, makeRoom(rt, label, evenSplit)];
     });
   }
 
-  function updateRoom(idx: number, patch: Partial<RoomBrief>) {
-    setRooms((rs) => rs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  function removeRoom(id: string) {
+    setRooms((rs) => rs.filter((r) => r.id !== id));
+  }
+
+  function duplicateRoom(id: string) {
+    setRooms((rs) => {
+      const src = rs.find((r) => r.id === id);
+      if (!src) return rs;
+      const sameType = rs.filter((r) => r.room_type === src.room_type).length;
+      return [...rs, { ...src, id: newId(), label: `${src.room_type} ${sameType + 1}` }];
+    });
+  }
+
+  function updateRoom(id: string, patch: Partial<RoomBrief>) {
+    setRooms((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
   function distributeEvenly() {
@@ -87,17 +105,17 @@ function NewProject() {
         data: {
           title: title || "Untitled project",
           intent,
-          // Backwards-compat summary fields (= first room)
           room_type: first.room_type,
           length_cm: first.length_cm ? parseInt(first.length_cm) : null,
           width_cm: first.width_cm ? parseInt(first.width_cm) : null,
           budget_inr: totalBudget,
           style_preference: first.style_preference,
           lifestyle,
-          must_haves: rooms.map((r) => `${r.room_type}: ${r.must_haves}`).filter((s) => !s.endsWith(": ")).join(" | "),
+          must_haves: rooms.map((r) => `${r.label}: ${r.must_haves}`).filter((s) => !s.endsWith(": ")).join(" | "),
           notes,
           rooms: rooms.map((r) => ({
             room_type: r.room_type,
+            label: r.label,
             length_cm: r.length_cm ? parseInt(r.length_cm) : null,
             width_cm: r.width_cm ? parseInt(r.width_cm) : null,
             budget_inr: r.budget_inr || 0,
