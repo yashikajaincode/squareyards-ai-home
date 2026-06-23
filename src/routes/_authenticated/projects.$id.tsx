@@ -52,31 +52,6 @@ function ProjectDetail() {
   }, [project?.status]);
 
 
-  async function onUpload(files: FileList | null) {
-    if (!files || !files.length || !project) return;
-    setBusy("uploading");
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
-      for (const f of Array.from(files)) {
-        const path = `${user.id}/${id}/${Date.now()}-${f.name}`;
-        const up = await supabase.storage.from("project-images").upload(path, f, { upsert: true });
-        if (up.error) throw up.error;
-        const signed = await supabase.storage.from("project-images").createSignedUrl(path, 60 * 60 * 24 * 365);
-        await recordImg({ data: {
-          project_id: id, kind: "room",
-          storage_path: path, public_url: signed.data?.signedUrl ?? "",
-        }});
-      }
-      qc.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Uploaded");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function runAnalyze() {
     if (!images.length) return toast.error("Upload at least one room photo first.");
     setBusy("analyzing");
