@@ -154,6 +154,18 @@ ${items.map(i => `${i.item_id} | ${i.category} | ${i.name} | ₹${i.price_inr ??
       for (const opt of parsed.options ?? []) {
         const boqIds: string[] = Array.isArray(opt.boq_item_ids) ? opt.boq_item_ids.filter((id: any) => itemsById.has(id)) : [];
         const budgetUsed = boqIds.reduce((s, id) => s + (itemsById.get(id)?.price_inr ?? 0), 0);
+
+        // Deterministic confidence: grounding (catalog) + budget fit + coverage + brief clarity
+        const roomBudget = Number(r.budget_inr) || 0;
+        const budgetScore = roomBudget > 0
+          ? (budgetUsed === 0 ? 0 : budgetUsed <= roomBudget ? 1 : Math.max(0, 1 - (budgetUsed - roomBudget) / roomBudget))
+          : 0.7;
+        const requestedIds: string[] = Array.isArray(opt.boq_item_ids) ? opt.boq_item_ids : [];
+        const groundingScore = requestedIds.length ? boqIds.length / requestedIds.length : 0;
+        const coverageScore = Math.min(1, boqIds.length / 5);
+        const briefClarity = ((r.length_cm ? 1 : 0) + (r.width_cm ? 1 : 0) + (r.budget_inr ? 1 : 0) + (r.style_preference ? 1 : 0) + (r.must_haves ? 1 : 0)) / 5;
+        const confidence = Math.round((groundingScore * 0.35 + budgetScore * 0.25 + coverageScore * 0.2 + briefClarity * 0.2) * 100);
+
         const { data: inserted, error } = await context.supabase.from("design_options").insert({
           project_id: data.project_id,
           user_id: context.userId,
@@ -163,7 +175,7 @@ ${items.map(i => `${i.item_id} | ${i.category} | ${i.name} | ₹${i.price_inr ??
           concept_name: opt.concept_name ?? "Concept",
           rationale: opt.rationale ?? "",
           tradeoffs: opt.tradeoffs ?? "",
-          confidence: Math.round(opt.confidence ?? 85),
+          confidence: Math.max(35, Math.min(99, confidence)),
           style_dna: opt.style_dna ?? [],
           color_palette: opt.color_palette ?? [],
           materials: opt.materials ?? [],
