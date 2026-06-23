@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getProject, recordImage } from "@/lib/projects.functions";
+import { getProject } from "@/lib/projects.functions";
+
 import { analyzeRoom, generateOptions, generateRender } from "@/lib/ai.functions";
 import { SiteNav } from "@/components/SiteNav";
 import { WorkflowTimeline } from "@/components/WorkflowTimeline";
