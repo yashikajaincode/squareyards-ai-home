@@ -30,6 +30,7 @@ export function SiteNav({ inverted = false }: { inverted?: boolean }) {
       <div className="flex items-center gap-4 text-sm">
         <Link to="/" className="hover:opacity-70" activeOptions={{ exact: true }}>Home</Link>
         <Link to="/spaces" className="hidden sm:inline hover:opacity-70">My Spaces</Link>
+        <Link to="/evals" className="hidden sm:inline hover:opacity-70">Evals</Link>
         <Link to="/new">
           <Button size="sm" variant="default" className="rounded-full">New Project</Button>
         </Link>
