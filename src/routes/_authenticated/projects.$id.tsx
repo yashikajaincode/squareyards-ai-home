@@ -82,6 +82,19 @@ function ProjectDetail() {
     } finally { setBusy(null); }
   }
 
+  // Auto-run analyze then generate so the workflow page just shows results.
+  useEffect(() => {
+    if (!project || busy) return;
+    const status = project.status;
+    if ((status === "draft" || status === "brief") && images.length > 0) {
+      runAnalyze();
+    } else if (status === "analyzed" && options.length === 0) {
+      runGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.status, images.length, options.length]);
+
+
   if (isLoading || !project) {
     return (
       <div className="min-h-screen bg-background"><SiteNav /><div className="px-10 py-20 text-muted-foreground">Loading…</div></div>
