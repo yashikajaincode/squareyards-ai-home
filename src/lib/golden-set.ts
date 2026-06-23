@@ -19,16 +19,16 @@ export type GoldenCase = {
 export const DATASET_EXPECTATIONS: Record<string, GoldenExpect> = {
   "BR-01": { must_cover: ["Sofa", "Coffee Table", "TV Unit", "Rug", "Floor Lamp"], style_judge: true },
   "BR-02": { must_cover: ["Sofa", "TV Unit"], style_judge: true },
-  "BR-03": { must_cover: ["Bed", "Wardrobe", "Nightstand"], style_judge: true },
-  "BR-04": { must_cover: ["Dining Table", "Console"], style_judge: true },
-  "BR-05": { must_cover: ["Rug", "Accent Chair"], style_judge: true },
-  "BR-06": { must_flag_infeasible: true },                       // ₹20k is too low
-  "BR-07": { must_decline: true },                                // load-bearing wall
-  "BR-08": { must_warn_brand: true, must_cover: ["Sofa", "Coffee Table", "Accent Chair"] },
-  "BR-09": { must_flag_infeasible: true },                        // 240x210cm + L-sectional + 8-seater + bookshelf
+  "BR-03": { must_cover: ["Bed", "Wardrobe", "Bedside Table"], style_judge: true },
+  "BR-04": { must_cover: ["Dining Table", "Pendant Light"], style_judge: true },
+  "BR-05": { must_cover: ["Rug", "Armchair"], style_judge: true },
+  "BR-06": { must_flag_infeasible: true },
+  "BR-07": { must_decline: true },
+  "BR-08": { must_warn_brand: true, must_cover: ["Sofa", "Coffee Table", "Armchair"] },
+  "BR-09": { must_flag_infeasible: true },
   "BR-10": { must_warn_guarantee: true, must_cover: ["Bed", "Rug"] },
   "BR-11": { must_cover: ["Desk", "Office Chair"], style_judge: true },
-  "BR-12": { must_cover: ["Bed", "Desk", "Storage"], style_judge: true },
+  "BR-12": { must_cover: ["Bed", "Desk", "Wardrobe"], style_judge: true },
   "BR-13": { must_cover: ["Dining Table"], style_judge: true },
   "BR-14": { must_cover: ["Sofa", "Wall Art"], style_judge: true },
 };
