@@ -26,8 +26,8 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const fetchProject = useServerFn(getProject);
-  const recordImg = useServerFn(recordImage);
   const analyze = useServerFn(analyzeRoom);
+
   const gen = useServerFn(generateOptions);
   const render = useServerFn(generateRender);
 
