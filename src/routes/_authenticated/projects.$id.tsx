@@ -9,9 +9,9 @@ import { WorkflowTimeline } from "@/components/WorkflowTimeline";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Wand2, ImagePlus, IndianRupee, ChevronRight, Sparkles } from "lucide-react";
+import { IndianRupee } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+
 import { formatINR } from "@/lib/intents";
 import sampleBefore from "@/assets/sample-before.jpg";
 import sampleAfter from "@/assets/sample-after.jpg";
