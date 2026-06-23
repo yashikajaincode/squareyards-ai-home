@@ -1,17 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getProject, recordImage } from "@/lib/projects.functions";
+import { getProject } from "@/lib/projects.functions";
+
 import { analyzeRoom, generateOptions, generateRender } from "@/lib/ai.functions";
 import { SiteNav } from "@/components/SiteNav";
 import { WorkflowTimeline } from "@/components/WorkflowTimeline";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Wand2, ImagePlus, IndianRupee, ChevronRight, Sparkles } from "lucide-react";
+import { IndianRupee } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+
 import { formatINR } from "@/lib/intents";
 import sampleBefore from "@/assets/sample-before.jpg";
 import sampleAfter from "@/assets/sample-after.jpg";
@@ -25,14 +26,13 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const fetchProject = useServerFn(getProject);
-  const recordImg = useServerFn(recordImage);
   const analyze = useServerFn(analyzeRoom);
+
   const gen = useServerFn(generateOptions);
   const render = useServerFn(generateRender);
 
   const [activeStep, setActiveStep] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -51,30 +51,6 @@ function ProjectDetail() {
     else if (project.status === "options_ready") setActiveStep(10);
   }, [project?.status]);
 
-  async function onUpload(files: FileList | null) {
-    if (!files || !files.length || !project) return;
-    setBusy("uploading");
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
-      for (const f of Array.from(files)) {
-        const path = `${user.id}/${id}/${Date.now()}-${f.name}`;
-        const up = await supabase.storage.from("project-images").upload(path, f, { upsert: true });
-        if (up.error) throw up.error;
-        const signed = await supabase.storage.from("project-images").createSignedUrl(path, 60 * 60 * 24 * 365);
-        await recordImg({ data: {
-          project_id: id, kind: "room",
-          storage_path: path, public_url: signed.data?.signedUrl ?? "",
-        }});
-      }
-      qc.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Uploaded");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setBusy(null);
-    }
-  }
 
   async function runAnalyze() {
     if (!images.length) return toast.error("Upload at least one room photo first.");
@@ -105,6 +81,19 @@ function ProjectDetail() {
       toast.error(e instanceof Error ? e.message : "Generation failed");
     } finally { setBusy(null); }
   }
+
+  // Auto-run analyze then generate so the workflow page just shows results.
+  useEffect(() => {
+    if (!project || busy) return;
+    const status = project.status;
+    if ((status === "draft" || status === "brief") && images.length > 0) {
+      runAnalyze();
+    } else if (status === "analyzed" && options.length === 0) {
+      runGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.status, images.length, options.length]);
+
 
   if (isLoading || !project) {
     return (
@@ -145,60 +134,31 @@ function ProjectDetail() {
 
           {/* MAIN */}
           <main className="space-y-8">
-            {/* Your space */}
-            <section className="rounded-2xl border border-border/70 bg-card p-6">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="font-display text-2xl">Your space</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {images.length
-                      ? `${images.length} photo${images.length > 1 ? "s" : ""} uploaded. Analyze to read the room.`
-                      : "Add a few photos of the room to unlock smarter designs."}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => onUpload(e.target.files)} />
-                  <Button variant="outline" onClick={() => fileRef.current?.click()} className="rounded-full">
-                    <Upload className="h-4 w-4 mr-1" /> Add photos
-                  </Button>
-                  <Button onClick={runAnalyze} disabled={busy !== null || !images.length} className="rounded-full">
-                    <Sparkles className="h-4 w-4 mr-1" />
-                    {busy === "analyzing" ? "Analyzing…" : a ? "Re-analyze" : "Analyze space"}
-                  </Button>
-                </div>
-              </div>
-              {images.length > 0 && (
-                <div className="mt-5 grid grid-cols-3 sm:grid-cols-5 gap-2">
-                  {images.map((img: any) => (
-                    <img key={img.id} src={img.public_url} alt="" className="aspect-square w-full rounded-lg object-cover border border-border/60" />
-                  ))}
-                </div>
-              )}
-              {a && (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Analysis summary */}
+            {a && (
+              <section className="rounded-2xl border border-border/70 bg-card p-6">
+                <h2 className="font-display text-2xl">Space analysis</h2>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <Stat label="Natural light" value={a.natural_light} />
                   <Stat label="Style detected" value={a.style_detected} />
                   <Stat label="Reusable items" value={(a.existing_furniture ?? []).filter((x: any) => x.reusable).length + " items"} />
                   <Stat label="Space efficiency" value={(a.space_efficiency_pct ?? 0) + "%"} />
                 </div>
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* Generate designs */}
+            {/* Design concepts */}
             <section className="rounded-2xl border border-border/70 bg-card p-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <h2 className="font-display text-2xl">Generate design concepts</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Three options: Balanced, Budget Optimized, Premium — with real BOQ and photoreal renders.</p>
-                </div>
-                <Button onClick={runGenerate} disabled={busy !== null} className="rounded-full">
-                  <Wand2 className="h-4 w-4 mr-1" />
-                  {busy === "generating" ? "Designing…" : options.length ? "Regenerate" : "Generate 3 options"}
-                </Button>
-              </div>
+              <h2 className="font-display text-2xl">Design concepts</h2>
+              {options.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {busy === "analyzing" ? "Analyzing your space…" :
+                   busy === "generating" ? "Designing three concepts with photoreal renders…" :
+                   "Preparing your concepts…"}
+                </p>
+              )}
 
               {options.length > 0 && (() => {
-                // Group options by room_label (preserving order)
                 const groups = new Map<string, any[]>();
                 for (const o of options) {
                   const k = o.room_label ?? project.room_type ?? "Room";
@@ -233,6 +193,7 @@ function ProjectDetail() {
                 );
               })()}
             </section>
+
           </main>
         </div>
       </div>
