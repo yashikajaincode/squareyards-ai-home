@@ -306,6 +306,45 @@ export type Database = {
         }
         Relationships: []
       }
+      room_briefs: {
+        Row: {
+          brief_id: string
+          budget_inr: number | null
+          ceiling_cm: number | null
+          constraints: string | null
+          customer_note: string | null
+          length_cm: number | null
+          must_haves: string | null
+          room_type: string
+          style_preference: string | null
+          width_cm: number | null
+        }
+        Insert: {
+          brief_id: string
+          budget_inr?: number | null
+          ceiling_cm?: number | null
+          constraints?: string | null
+          customer_note?: string | null
+          length_cm?: number | null
+          must_haves?: string | null
+          room_type: string
+          style_preference?: string | null
+          width_cm?: number | null
+        }
+        Update: {
+          brief_id?: string
+          budget_inr?: number | null
+          ceiling_cm?: number | null
+          constraints?: string | null
+          customer_note?: string | null
+          length_cm?: number | null
+          must_haves?: string | null
+          room_type?: string
+          style_preference?: string | null
+          width_cm?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
