@@ -32,7 +32,6 @@ function ProjectDetail() {
 
   const [activeStep, setActiveStep] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -50,6 +49,7 @@ function ProjectDetail() {
     else if (project.status === "analyzed") setActiveStep(5);
     else if (project.status === "options_ready") setActiveStep(10);
   }, [project?.status]);
+
 
   async function onUpload(files: FileList | null) {
     if (!files || !files.length || !project) return;
