@@ -127,6 +127,25 @@ function NewProject() {
           })),
         },
       });
+
+      // Upload room photos (if any) and record them
+      const allPhotos = rooms.flatMap((r) => r.photos.map((f) => ({ room: r.label, file: f })));
+      if (allPhotos.length) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (const { file } of allPhotos) {
+            const path = `${user.id}/${id}/${Date.now()}-${file.name}`;
+            const up = await supabase.storage.from("project-images").upload(path, file, { upsert: true });
+            if (up.error) continue;
+            const signed = await supabase.storage.from("project-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+            await recordImg({ data: {
+              project_id: id, kind: "room",
+              storage_path: path, public_url: signed.data?.signedUrl ?? "",
+            }}).catch(() => {});
+          }
+        }
+      }
+
       router.navigate({ to: "/projects/$id", params: { id } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create project");
