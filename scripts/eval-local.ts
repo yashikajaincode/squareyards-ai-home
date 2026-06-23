@@ -1,12 +1,12 @@
 // Local dry run: load the uploaded SQLite catalog, run the planner + scorers
 // without LLM, and print a summary. Proves grounding + scorers work.
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import { planBrief, type Brief, type CatalogItem } from "../src/lib/agent";
 import { DATASET_EXPECTATIONS, ADVERSARIAL, type GoldenExpect } from "../src/lib/golden-set";
 
 const db = new Database("/tmp/cat.db", { readonly: true });
-const catalog = db.prepare("SELECT * FROM catalog").all() as CatalogItem[];
-const briefs = db.prepare("SELECT * FROM room_briefs").all() as Brief[];
+const catalog = db.query("SELECT * FROM catalog").all() as CatalogItem[];
+const briefs = db.query("SELECT * FROM room_briefs").all() as Brief[];
 
 const catalogIds = new Set(catalog.map((c) => c.item_id));
 
