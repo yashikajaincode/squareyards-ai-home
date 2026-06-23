@@ -48,7 +48,7 @@ function ProjectDetail() {
     if (!project) return;
     if (project.status === "draft" || project.status === "brief") setActiveStep(0);
     else if (project.status === "analyzed") setActiveStep(5);
-    else if (project.status === "options_ready") setActiveStep(10);
+    else if (project.status === "options_ready") setActiveStep(11); // beyond last index = all done
   }, [project?.status]);
 
 
