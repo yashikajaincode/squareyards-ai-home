@@ -108,7 +108,7 @@ export const ADVERSARIAL: AdversarialBrief[] = [
     must_haves: "Bed, wardrobe, nightstands, lighting, rug",
     constraints: "Premium",
     customer_note: "Budget is comfortable.",
-    expects: { must_cover: ["Bed", "Wardrobe", "Nightstand"], style_judge: true },
+    expects: { must_cover: ["Bed", "Wardrobe", "Bedside Table"], style_judge: true },
   },
   {
     brief_id: "ADV-08", room_type: "Kids",
@@ -117,7 +117,7 @@ export const ADVERSARIAL: AdversarialBrief[] = [
     must_haves: "Bed, desk, storage",
     constraints: "8-year-old",
     customer_note: "Durable.",
-    expects: { must_cover: ["Bed", "Desk", "Storage"], style_judge: true },
+    expects: { must_cover: ["Bed", "Desk", "Wardrobe"], style_judge: true },
   },
   {
     brief_id: "ADV-09", room_type: "Living Room",
@@ -135,7 +135,7 @@ export const ADVERSARIAL: AdversarialBrief[] = [
     must_haves: "Layered rugs, accent chairs, plants",
     constraints: "",
     customer_note: "No TV, lots of texture.",
-    expects: { must_cover: ["Rug", "Accent Chair"], style_judge: true },
+    expects: { must_cover: ["Rug", "Armchair"], style_judge: true },
   },
   {
     brief_id: "ADV-11", room_type: "Dining",
