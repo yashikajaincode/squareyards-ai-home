@@ -1,16 +1,17 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { createProject } from "@/lib/projects.functions";
+import { createProject, recordImage } from "@/lib/projects.functions";
 import { SiteNav } from "@/components/SiteNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { INTENTS, ROOM_TYPES, STYLES, formatINR } from "@/lib/intents";
-import { ArrowRight, Check, Copy, Plus, X } from "lucide-react";
+import { ArrowRight, Check, Copy, Plus, Upload, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/new")({
   head: () => ({ meta: [{ title: "Start a project — SquareYards AI" }] }),
